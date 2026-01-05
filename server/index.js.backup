@@ -1,0 +1,306 @@
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+const puppeteer = require('puppeteer');
+const Imap = require('imap');
+const { simpleParser } = require('mailparser');
+const app = express();
+const PORT = process.env.PORT || 4000;
+const SECRET = process.env.JWT_SECRET || 'dev_secret_please_change';
+
+app.use(cors());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+// In-memory storage
+let sentEmailsStore = [];
+let smtpConfigStore = [
+  {
+    id: 1,
+    name: 'Invoice SMTP',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: { user: '', pass: '' },
+    purpose: 'Billing & Invoicing',
+    testStatus: 'not_tested',
+    type: 'invoice'
+  },
+  {
+    id: 2,
+    name: 'Notification SMTP',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: { user: '', pass: '' },
+    purpose: 'System Alerts & Notifications',
+    testStatus: 'not_tested',
+    type: 'notification'
+  },
+  {
+    id: 3,
+    name: 'HR SMTP',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: { user: '', pass: '' },
+    purpose: 'Human Resources Communications',
+    testStatus: 'not_tested',
+    type: 'hr'
+  },
+  {
+    id: 4,
+    name: 'Support SMTP',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: { user: '', pass: '' },
+    purpose: 'Customer Support & Inquiries',
+    testStatus: 'not_tested',
+    type: 'support'
+  },
+  {
+    id: 5,
+    name: 'Marketing SMTP',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: { user: '', pass: '' },
+    purpose: 'Marketing Campaigns & Newsletters',
+    testStatus: 'not_tested',
+    type: 'marketing'
+  }
+];
+
+let imapConfig = {
+  user: '',
+  password: '',
+  host: 'imap.gmail.com',
+  port: 993,
+  tls: true
+};
+
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Backend is working!' });
+});
+
+// Auth endpoint
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (email === 'admin@example.com' && password === 'Password123') {
+    const token = 'test-token-123';
+    res.json({ 
+      token, 
+      user: { id: 1, email, name: 'Admin User', role: 'admin' } 
+    });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
+// Get SMTP Accounts
+app.get('/api/email/smtp-accounts', (req, res) => {
+  // Mask passwords in response
+  const maskedAccounts = smtpConfigStore.map(acc => ({
+    ...acc,
+    auth: { ...acc.auth, pass: acc.auth.pass ? '••••••••' : '' }
+  }));
+  res.json(maskedAccounts);
+});
+
+// Update SMTP Account
+app.put('/api/email/smtp-accounts/:id', (req, res) => {
+  const { id } = req.params;
+  const { host, port, secure, auth } = req.body;
+  
+  const accountIndex = smtpConfigStore.findIndex(a => a.id === parseInt(id));
+  if (accountIndex === -1) {
+    return res.status(404).json({ error: 'Account not found' });
+  }
+  
+  smtpConfigStore[accountIndex] = {
+    ...smtpConfigStore[accountIndex],
+    host,
+    port,
+    secure,
+    auth: { user: auth.user, pass: auth.pass }
+  };
+  
+  res.json({ success: true, message: 'Account updated successfully' });
+});
+
+// Test SMTP Connection
+app.post('/api/email/test-connection', async (req, res) => {
+  const { host, port, secure, user, pass } = req.body;
+  
+  try {
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user, pass }
+    });
+    
+    await transporter.verify();
+    res.json({ success: true, message: `Successfully connected to ${host}:${port} as ${user}` });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// Configure IMAP
+app.post('/api/email/configure-imap', (req, res) => {
+  const { user, password, host, port, tls } = req.body;
+  imapConfig = { user, password, host, port, tls };
+  res.json({ success: true, message: 'IMAP configured successfully' });
+});
+
+// Inbox endpoint
+app.get('/api/email/inbox', (req, res) => {
+  const inboxEmails = [
+    {
+      id: '1',
+      subject: 'Welcome to CentraPro',
+      from: 'admin@centrapro.com',
+      to: 'user@example.com',
+      text: 'Welcome to the CentraPro portal. This is your first email.',
+      date: new Date('2025-12-01').toISOString(),
+      hasAttachments: false
+    },
+    {
+      id: '2',
+      subject: 'Timesheet Approval Required',
+// Fetch Inbox via IMAP
+app.get('/api/email/inbox', async (req, res) => {
+  if (!imapConfig.user || !imapConfig.password) {
+    return res.json([
+      {
+        id: '1',
+        subject: 'Configure IMAP to see real emails',
+        from: 'system@centrapro.com',
+        to: imapConfig.user || 'user@example.com',
+        text: 'Please configure IMAP settings in SMTP Accounts to fetch real emails.',
+        date: new Date().toISOString(),
+        hasAttachments: false
+      }
+    ]);
+  }
+
+  try {
+    const imap = new Imap(imapConfig);
+    const emails = [];
+
+    imap.once('ready', () => {
+      imap.openBox('INBOX', true, (err, box) => {
+        if (err) {
+          console.error('IMAP openBox error:', err);
+          imap.end();
+          return res.status(500).json({ error: err.message });
+        }
+
+        const fetch = imap.seq.fetch('1:10', { bodies: '' });
+        
+        fetch.on('message', (msg) => {
+          msg.on('body', (stream) => {
+            simpleParser(stream, (err, parsed) => {
+              if (!err) {
+                emails.push({
+                  id: parsed.messageId || Date.now().toString(),
+                  subject: parsed.subject || '(No Subject)',
+                  from: parsed.from?.text || 'Unknown',
+                  to: parsed.to?.text || '',
+                  text: parsed.text || parsed.html || '',
+                  date: parsed.date?.toISOString() || new Date().toISOString(),
+                  hasAttachments: (parsed.attachments?.length || 0) > 0
+                });
+              }
+            });
+          });
+        });
+
+        fetch.once('end', () => {
+          imap.end();
+          res.json(emails.reverse());
+        });
+      });
+    });
+
+    imap.once('error', (err) => {
+      console.error('IMAP error:', err);
+      res.status(500).json({ error: err.message });
+    });
+
+    imap.connect();
+  } catch (error) {
+    console.error('Inbox fetch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Sent Emails
+app.get('/api/email/sent', (req, res) => {
+  res.json(sentEmailsStore);
+});
+
+// Send Email via SMTP
+app.post('/api/email/send', async (req, res) => {
+  const { to, subject, body, purpose } = req.body;
+  
+  // Find SMTP config for this purpose
+  const smtpAccount = smtpConfigStore.find(acc => acc.type === purpose);
+  
+  if (!smtpAccount || !smtpAccount.auth.user || !smtpAccount.auth.pass) {
+    return res.status(400).json({ 
+      success: false, 
+      message: `Please configure ${purpose} SMTP account first` 
+    });
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: smtpAccount.host,
+      port: smtpAccount.port,
+      secure: smtpAccount.secure,
+      auth: {
+        user: smtpAccount.auth.user,
+        pass: smtpAccount.auth.pass
+      }
+    });
+
+    const info = await transporter.sendMail({
+      from: `"${smtpAccount.name}" <${smtpAccount.auth.user}>`,
+      to,
+      subject,
+      text: body,
+      html: `<p>${body.replace(/\n/g, '<br>')}</p>`
+    });
+
+    // Store sent email
+    const sentEmail = {
+      id: sentEmailsStore.length + 1,
+      to,
+      subject,
+      body,
+      purpose,
+      sentAt: new Date().toISOString(),
+      status: 'delivered',
+      messageId: info.messageId
+    };
+    sentEmailsStore.push(sentEmail);
+
+    res.json({
+      success: true,
+      message: 'Email sent successfully',
+      emailId: sentEmail.id
+    });
+  } catch (error) {
+    console.error('Send email error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+});

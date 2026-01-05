@@ -1,0 +1,156 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body { 
+  margin: 0; 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background: #F5F5F7; /* Apple-like light background */
+  color: #1D1D1D;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+a { text-decoration: none; color: inherit; }
+
+.topbar { 
+  height: 72px; 
+  background: rgba(255,255,255,0.8); 
+  border-bottom: 1px solid #E5E5EA;
+  backdrop-filter: blur(10px);
+}
+
+.topbar .MuiToolbar-root {
+  padding: 8px 16px;
+}
+
+.brand img { 
+  height: 36px;
+  width: auto;
+  border-radius: 6px;
+}
+
+.sidebar-compact { 
+  width: 80px; 
+  background: #FFFFFF; 
+  border-right: 1px solid #E5E5EA;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 8px;
+}
+
+.sidebar-compact .MuiListItemButton-root { 
+  border-radius: 12px; 
+  margin: 6px 0;
+  color: #86868B;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  padding: 12px;
+}
+
+.sidebar-compact .MuiListItemButton-root:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.sidebar-compact .MuiListItemButton-root.Mui-selected {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.search { 
+  background: #F5F5F7; 
+  padding: 8px 12px; 
+  border-radius: 12px;
+  border: 1px solid #E5E5EA;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.search:hover {
+  background: #e8edf6;
+  border-color: #d1d5db;
+}
+
+.search:focus-within {
+  background: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.card { 
+  background: #fff; 
+  padding: 18px; 
+  border-radius: 18px; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border: 1px solid #E5E5EA;
+  transition: box-shadow 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.small { 
+  font-size: 12px; 
+  color: #86868B;
+  font-weight: 500;
+}
+
+.MuiPaper-root {
+  background: #fff;
+  border: 1px solid #E5E5EA;
+  border-radius: 16px;
+}
+
+.MuiTableHead-root {
+  background: #F5F5F7;
+}
+
+.MuiTableHead-root .MuiTableCell-root {
+  font-weight: 600;
+  color: #0f172a;
+  border-bottom: 2px solid #e6e9ef;
+}
+
+.MuiTableBody-root .MuiTableRow-root:hover {
+  background: #f8fafc;
+}
+
+.MuiButton-contained {
+  text-transform: none;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  border-radius: 1000px; /* pill */
+  padding: 10px 28px;
+}
+
+.MuiButton-outlined {
+  text-transform: none;
+  font-weight: 600;
+  border-radius: 1000px;
+  padding: 8px 20px;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root {
+  border-radius: 12px;
+}
+
+/* Apple-like link styling */
+a.button-link { color: #0071E3; text-decoration: none; }
+
+/* Small helper for pill badges */
+.pill-badge { padding: 6px 12px; border-radius: 999px; background:#F5F5F7; border:1px solid #E5E5EA; font-weight:600; color:#1D1D1D }

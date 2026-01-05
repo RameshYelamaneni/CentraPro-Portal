@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "tenantId": "da28b76b-d863-4415-a190-cec116ad367e",
+  "clientId": "1443c462-d929-4195-9282-64df97cf4e3a",
+  "clientSecret": "iIe8Q~kZ~zNMCtOw7T7ifxC0li_fJ.pIrcRB.c4-",
+  "siteUrl": "https://rightarcconsulting.sharepoint.com",
+  "siteName": "rightarcconsulting.sharepoint.com",
+  "connectionStatus": "connected",
+  "lastTested": "2025-12-09T15:56:20.281Z",
+  "listsCreated": false,
+  "listsCount": 8
+}
